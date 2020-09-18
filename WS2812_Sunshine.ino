@@ -175,7 +175,7 @@ void change_mode_fast(int arg){
 }
 void stay_ease(){
   static unsigned long time_ease_bright;
-  if(millis()-time_ease_bright>1){
+  if(millis()-time_ease_bright>2){
   //Serial.println(String(bright) + "-n  " + String(new_bright));
   if(new_bright!=bright){
   if(new_bright<bright)bright-=5;
@@ -219,15 +219,15 @@ void remove_control(){
   boolean availability_hand_out=0;
   static int count_moves=0;
   static boolean change_mode_distace=0;
-  if(millis()-time_of_update>20){
+  if(millis()-time_of_update>50){
     distance_static = int( ultrasonicSensor.getDistance());
     if(distance_static!= -27536){
     if(old_distance-distance_static>50 && availability_hand==0){ availability_hand=1; availability_hand_in=1; } // при різкій зміні дистанції ми вказуэм наявність рукі і зміну стану
     if(distance_static-old_distance>50 && availability_hand==1){ availability_hand=0; availability_hand_out=1; }
 
-    if(millis()-time_last_move<2000 && availability_hand_in){
+    if(millis()-time_last_move<1000 && availability_hand_in){
       count_moves++;
-      if(count_moves>1){
+      if(count_moves>1 && new_bright!=0){
         if(counting>max_mode)counting=1;
           else counting++;
             EEPROM.write(10,counting);         
@@ -236,7 +236,7 @@ void remove_control(){
       } 
       Serial.println(count_moves);
     }
-    if(millis()-time_last_move>2000){
+    if(millis()-time_last_move>1000){
       if(count_moves==1){
         
        if(new_bright>0)new_bright=0;
@@ -245,7 +245,7 @@ void remove_control(){
       count_moves=0;
      
     }
-
+    Serial.println(count_moves);
     
     if(availability_hand){
       digitalWrite(5,0);
