@@ -1,9 +1,3 @@
-/*
-  Скетч создан на основе FASTSPI2 EFFECTS EXAMPLES автора teldredge (www.funkboxing.com)
-  А также вот этой статьи https://www.tweaking4all.com/hardware/arduino/adruino-led-LEDS-effects/#cylon
-  Доработан, переведён и разбит на файлы 2017 AlexGyver
-  Смена выбранных режимов кнопкой. Кнопка подключена на D2 и GND
-*/
 
 
 
@@ -13,13 +7,16 @@
 iarduino_Encoder_tmr enc(A1,A4);              //  Объявляем объект enc для работы с энкодером указывая (№ вывода A, № вывода B)
 #include <EEPROM.h>                                              //  Если при объявлении объектов перепутать выводы, то поворот влево будет расценен как поворот вправо и наоборот
 #include "GyverButton.h"
-GButton butt1(A5);                                  //  При использовании библиотеки iarduino_Encoder_tmr можно подключить до 8 энкодеров.
+GButton butt1(A5);       
 
-
+#include <HCSR04.h>
+#define PIN_TRIG 10
+#define PIN_ECHO 11
+HCSR04 ultrasonicSensor(PIN_TRIG, PIN_ECHO, 20, 300);
          // библиотека для работы с лентой
 
-#define LED_COUNT 65          // число светодиодов в кольце/ленте
-#define LED_DT 13             // пин, куда подключен DIN ленты
+#define LED_COUNT 120          // число светодиодов в кольце/ленте
+#define LED_DT 12             // пин, куда подключен DIN ленты
 
 static byte bright;
 static int counting;  
@@ -56,8 +53,11 @@ int   counter=0;
 boolean activity_move;
 CRGBPalette16 firePalette;
 byte new_bright;
+int max_mode=12;
+
 void setup()
 {
+  ultrasonicSensor.begin();
  randomSeed(analogRead(0));
   counter = random(0, 30000);
 
@@ -86,9 +86,8 @@ void setup()
   butt1.setDebounce(90);        // настройка антидребезга (по умолчанию 80 мс)
   butt1.setTimeout(300);
   
-  bright=EEPROM.read(1);
-  counting=EEPROM.read(10);
-  activity_move=EEPROM.read(15);
+  bright=250;
+  counting=3;
 
    LEDS.setBrightness(bright);
   randomSeed(analogRead(0));
@@ -116,51 +115,9 @@ void one_color_all(int cred, int cgrn, int cblu) {       //-SET ALL LEDS TO ONE 
 }
 
 void loop() {
-    int max_mode=12;
-     bluetooth_();
-     if(activity_move){move_sensor(); analogWrite(9,200); }
-     else analogWrite(9,0);
-     
-    int a=enc.read();                         //  Читаем состояние энкодера в переменную a
-    if (butt1.isDouble())activity_move=!activity_move;
-    if(butt1.isClick()){
-          if(counting>max_mode)counting=1;
-          else counting++;
-      Serial.println( counting);
-    }
-    if(a){               
-        if(butt1.isHold()){
-        if(a==encLEFT ){
-          if(counting>1)counting--;
-          else counting=max_mode;
-          } 
-        if(a==encRIGHT){
-          if(counting>max_mode)counting=1;
-          else counting++;
-          }
-           EEPROM.write(10,counting); 
-           Serial.println(String(counting));
-       change_mode(counting);   
-       changeFlag = true;
-        }
-        else{
-          if(a==encLEFT ){
-          if(bright>1)bright-=25;
-          else bright=0;
-          } 
-        if(a==encRIGHT){
-          if(bright>=250)bright=250;
-          else bright+=25;
-          }
-             Serial.println("bright   "+String(bright));
-          EEPROM.write(1,bright); 
-          LEDS.setBrightness(bright);
-          new_bright=bright;
-        }
-         
-    }
-    
-    
+   
+    remove_control();
+    stay_ease();
 
   /*
     if (Serial.available() > 0) {     // если что то прислали
@@ -172,9 +129,9 @@ void loop() {
     case 999: break;                           // пазуа
     case  1: rainbow_loop(); break;            // крутящаяся радуга // da
     case  2: flicker(); break;                 // случайный стробоскоп
-    case 3:fireLine(); break;
+    case 3: fireLineNoise(); break;
     case 4: new_rainbow_loop(); break;        // крутая плавная вращающаяся радуга // daq!!!
-    case 5:fireLineNoise();break; 
+    case 5:fireLine();break; 
      case 6: one_color_all(255, 0, 0); LEDS.show(); break; //---ALL RED
     case 7: one_color_all(0, 255, 0); LEDS.show(); break; //---ALL GREEN
     case 8: one_color_all(0, 0, 255); LEDS.show(); break; //---ALL BLUE
@@ -182,6 +139,7 @@ void loop() {
     case 10: one_color_all(0, 255, 255); LEDS.show(); break; //---ALL COLOR Y
     case 11: one_color_all(255, 0, 255); LEDS.show(); break; //---ALL COLOR Z
     case 12:  one_color_all(255, 91, 0); LEDS.show(); break; //---ALL RED
+    case 13:  one_color_all(255, 255, 255); LEDS.show(); break; //---ALL RED
     }
 }
 
@@ -201,81 +159,14 @@ void change_mode(int newmode) {
     case 10: one_color_all(0, 255, 255); LEDS.show(); break; //---ALL COLOR Y
     case 11: one_color_all(255, 0, 255); LEDS.show(); break; //---ALL COLOR Z
     case 12:  one_color_all(255, 91, 0); LEDS.show(); break; //---ALL RED
+    case 13:  one_color_all(255, 255, 255); LEDS.show(); break; //---ALL RED
     }
   bouncedirection = 0;
   one_color_all(0, 0, 0);
 //  ledMode = newmode;
 }
 
-void bluetooth_(){
-  static unsigned long sleep_mode=0;
-  int val;
- 
-  stay_ease(); 
-  if (Serial.available())
-  {
-    val = Serial.read();
-     unsigned int sleep_sec_time=0;
-     if(sleep_mode!=0)sleep_sec_time=trunc((sleep_mode-millis())/60000);  
-     else sleep_sec_time=0;
-     
-    if (val == 'l')new_bright=250;
-    else if ( val == 'd')new_bright=0;
-    else if(val == 'R' )change_mode_fast(6);
-    else if(val == 'G' )change_mode_fast(7);
-    else if(val == 'B' )change_mode_fast(8);
-    else if(val == 'Y' )change_mode_fast(9);
-    else if(val == 'S' )change_mode_fast(10);
-    else if(val == 'P' )change_mode_fast(11);
-    else if(val == 'O' )change_mode_fast(12);
-    else if(val == 'q' )change_mode_fast(1);
-    else if(val == 'w' )change_mode_fast(2);
-    else if(val == 'e' )change_mode_fast(3);
-    else if(val == 'r' )change_mode_fast(4);
-    else if(val == 't' )change_mode_fast(5);
-    else if(val == '0' )new_bright=25;
-  else if(val == '1' )new_bright=50;
-  else if(val == '2' )new_bright=75;
-  else if(val == '3' )new_bright=100;
-  else if(val == '4' )new_bright=125;
-  else if(val == '5' )new_bright=150;
-  else if(val == '6' )new_bright=175;
-  else if(val == '7' )new_bright=200;
-  else if(val == '8' )new_bright=225;
-  else if(val == '9' )new_bright=250;
-  else if(val == 'm' ){
-      activity_move=!activity_move;
-      EEPROM.write(15,activity_move); 
-      if(activity_move)Serial.println("Move sensor active!");
-      else Serial.println("Move sensor not active!");
-    }
-   else if(val=='h'){
-      Serial.println(" TFK 2020 \n Lamp for sex functionality;)\n l -100% light \n d - 0% light");
-      Serial.println(" R - red \n G - green \n B - blue \n Y - yellow \n S - sky \n P - pink \n O - orange ");
-      Serial.println(" q - string rainbow \n w - flicker \n e - noice fire \n r - mild rainbow \n t - zone fire");
-      Serial.println(" 0-9 level light (25-250) \n m - on/of move sensor \n s - sleep wait mode(+5 minute) \n h - help:D");
-      Serial.println(" Motion sensor activity - " +String(digitalRead(11)) + " \n Motion sensor mode - " + String(activity_move));
-      Serial.println(String(sleep_sec_time) +" m. to dark");
-    unsigned int hours_= millis()/3600000;
-    unsigned int minutes_= (millis()-hours_*3600000)/60000;
-    unsigned int seconds_ = trunc((millis()- (hours_*3600000 + minutes_*60000))/1000);  
-    Serial.println(String(hours_) + " h. " + String(minutes_) + " m. " + String(seconds_) + " s. - work time"  );
-   }
-   else if(val == 's' ){
-    if(sleep_mode<millis())sleep_mode=millis()+300000;
-    else sleep_mode+=300000;
-    unsigned int sleep_sec_time=trunc((sleep_mode-millis())/60000);
-    Serial.println(String(sleep_sec_time) +" m. to dark");
-  }
-  }
-    long sleep_time_check=sleep_mode-millis()-100;
-    if(sleep_time_check<0 && sleep_time_check>(-10)){
-    new_bright=0;
-    sleep_mode=0;
-    Serial.println("Dark.Sweet Dream!");  
-  }
-  
-}
+
 void change_mode_fast(int arg){
   counting=arg;
   EEPROM.write(10,counting);         
@@ -283,30 +174,106 @@ void change_mode_fast(int arg){
   changeFlag = true;
 }
 void stay_ease(){
-  
-  if(millis()%4==0){
+  static unsigned long time_ease_bright;
+  if(millis()-time_ease_bright>1){
   //Serial.println(String(bright) + "-n  " + String(new_bright));
   if(new_bright!=bright){
-  if(new_bright<bright)bright--;
-  else bright++;
+  if(new_bright<bright)bright-=5;
+  else bright+=5;
   }
+  //Serial.println(bright);
+  time_ease_bright=millis();
+  LEDS.setBrightness(bright); 
   }
-LEDS.setBrightness(bright);  
+ 
 }
-void move_sensor(){
-  static boolean old_move_sensor_activity;
-  static unsigned long time_of_move;
-  static int count_move;
+/*
+int distance_cm(){
+  int duration, cm; // назначаем переменную "cm" и "duration" для показаний датчика  
+  digitalWrite(TRIG_PIN, LOW); // изначально датчик не посылает сигнал
+  delayMicroseconds(2); // ставим задержку в 2 ммикросекунд
+
+  digitalWrite(TRIG_PIN, HIGH); // посылаем сигнал
+  delayMicroseconds(10); // ставим задержку в 10 микросекунд
+  digitalWrite(TRIG_PIN, LOW); // выключаем сигнал
+
+  duration = pulseIn(ECHO_PIN, HIGH); // включаем прием сигнала
+
+  cm = duration / 58; // вычисляем расстояние в сантиметрах
   
-  if(digitalRead(11))count_move++;
-  else count_move=0;
-  if(count_move>200){
-    time_of_move=millis();
-    new_bright=250;
+ return cm;
+
+}
+*/
+
+void remove_control(){
+  static unsigned long time_of_update=millis();
+  static unsigned long time_last_move;
+  
+  static int old_distance;
+  int distance_static;
+
+  
+  static boolean availability_hand=0;
+  boolean availability_hand_in=0;
+  boolean availability_hand_out=0;
+  static int count_moves=0;
+  static boolean change_mode_distace=0;
+  if(millis()-time_of_update>20){
+    distance_static = int( ultrasonicSensor.getDistance());
+    if(distance_static!= -27536){
+    if(old_distance-distance_static>50 && availability_hand==0){ availability_hand=1; availability_hand_in=1; } // при різкій зміні дистанції ми вказуэм наявність рукі і зміну стану
+    if(distance_static-old_distance>50 && availability_hand==1){ availability_hand=0; availability_hand_out=1; }
+
+    if(millis()-time_last_move<2000 && availability_hand_in){
+      count_moves++;
+      if(count_moves>1){
+        if(counting>max_mode)counting=1;
+          else counting++;
+            EEPROM.write(10,counting);         
+       change_mode(counting);   
+       changeFlag = true;
+      } 
+      Serial.println(count_moves);
+    }
+    if(millis()-time_last_move>2000){
+      if(count_moves==1){
+        
+       if(new_bright>0)new_bright=0;
+       else new_bright=250;
+      }
+      count_moves=0;
+     
+    }
+
+    
+    if(availability_hand){
+      digitalWrite(5,0);
+      digitalWrite(6,0);
+    }
+    else{
+      digitalWrite(5,240);
+      digitalWrite(6,240);
+      
+    }
+    //Serial.println("Distance:" + String(distance_static) + " Hand :" + String(availability_hand));
+    if(availability_hand_in)time_last_move=millis();
+
+    
+    if(millis()-time_last_move>1000 && availability_hand==1){
+      //Serial.println(String(distance_static));
+      
+      int  delta_distance=constrain(distance_static,5,25);
+      delta_distance=map(delta_distance,5,25,0,10);
+      new_bright=delta_distance*25;
+
+ 
+    }
+    
+    
+    //Serial.println(availability_hand);
+    old_distance=distance_static; // last value of sensor
+    time_of_update=millis();
   }
-  if(!old_move_sensor_activity && digitalRead(11))Serial.print("The motion sensor has detected activity! \n");
-  if(old_move_sensor_activity  && !digitalRead(11))Serial.println("activity disappeared \n");
-  old_move_sensor_activity=digitalRead(11);
-  if(millis()-time_of_move>60000)new_bright=0;
-  //Serial.println(String(millis()-time_of_move) +"    "+ String(count_move) );
+  }
 }

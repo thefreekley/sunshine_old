@@ -221,13 +221,13 @@ boolean safeDelay(int delTime) {
   return false;
 }
 
-#define ZONE_AMOUNT 65
+#define ZONE_AMOUNT 120
 byte zoneValues[ZONE_AMOUNT];
 byte zoneRndValues[ZONE_AMOUNT];
 
 
-#define NUM_LEDS 65    // количество светодиодов
-#define LED_PIN 13      // пин ленты
+#define NUM_LEDS 120// количество светодиодов
+#define LED_PIN 12      // пин ленты
 
 // настройки пламени
 #define HUE_START 3     // начальный цвет огня (0 красный, 80 зелёный, 140 молния, 190 розовый)
@@ -250,7 +250,7 @@ void fireLine() {
   // задаём направление движения огня
   if (millis() - prevTime > 100) {
     prevTime = millis();
-    FOR_i(0, 65) {
+    FOR_i(0, 120) {
       zoneRndValues[i] = random(0, 10);
     }
   }
@@ -272,13 +272,13 @@ void fireLineNoise() {
   static uint32_t prevTime;
 
   // задаём направление движения огня
-  if (millis() - prevTime > 30) {
+  if (millis() - prevTime > 50) {
     prevTime = millis();
-    FOR_i(0, NUM_LEDS) {
+    FOR_i(0, LED_COUNT) {
       //leds[i] = getFireColor(inoise8(i * FIRE_STEP, i * FIRE_STEP, counter));
       leds[i]=getPixColor(ColorFromPalette(firePalette, (inoise8(i * 15, counter)), 255, LINEARBLEND));
     }
-    counter += 20;
+    counter += 10;
     LEDS.show();
   }
 }
