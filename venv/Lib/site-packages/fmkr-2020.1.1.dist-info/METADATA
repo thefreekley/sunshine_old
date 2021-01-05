@@ -1,0 +1,95 @@
+Metadata-Version: 2.1
+Name: fmkr
+Version: 2020.1.1
+Summary: Access FileMaker(tm) Server Databases
+Home-page: https://www.lfd.uci.edu/~gohlke/
+Author: Christoph Gohlke
+Author-email: cgohlke@uci.edu
+License: BSD
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Topic :: Database
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.6
+Requires-Dist: lxml (>=4.2)
+
+Access FileMaker(tm) Server Databases
+=====================================
+
+Fmkr is a Python library to access FileMaker(tm) Server 8 Advanced databases
+via the XML publishing interface.
+
+"FileMaker" is a registered trademark of FileMaker Inc.
+
+:Author:
+  `Christoph Gohlke <https://www.lfd.uci.edu/~gohlke/>`_
+
+:Organization:
+  Laboratory for Fluorescence Dynamics. University of California, Irvine
+
+:License: BSD 3-Clause
+
+:Version: 2020.1.1
+
+Requirements
+------------
+* `CPython >= 3.6 <https://www.python.org>`_
+* `lxml 4.2 <https://github.com/lxml/lxml>`_
+* `FileMaker(tm) Server 8 Advanced <https://www.filemaker.com>`_
+
+Revisions
+---------
+2020.1.1
+    Remove support for Python 3.5.
+    Update copyright.
+2018.8.15
+    Move fmkr.py into fmkr package.
+2018.5.25
+    Use lxml instead of minidom to parse FMPXMLResult.
+    Improve string representations of FMPXMLResult and FMField.
+    Update error codes.
+    Remove support for Python 2.
+2006.10.30
+    Initial release.
+
+References
+----------
+1. http://www.filemaker.com/downloads/documentation/fmsa8_custom_web_guide.pdf
+
+Examples
+--------
+>>> from fmkr import FM, FMError
+>>> fmi = FM('filemaker.domain.com', 80, 'http')
+>>> fmi.set_db_data('database', 'layout', maxret=5)
+>>> fmi.set_db_password('fmuser', 'password')
+>>> # create a new record
+>>> fmi.add_db_param('FIRST', 'John')
+>>> fmi.add_db_param('LAST', 'Doe')
+>>> fmi.fm_new()
+>>> # find and sort records
+>>> fmi.add_db_param('LAST', 'Doe', 'bw')
+>>> fmi.add_sort_param('LAST', 'ascend', 1)
+>>> fmi.add_sort_param('FIRST', 'ascend', 2)
+>>> result = fmi.fm_find()
+>>> for record in result.resultset:
+...     print(record['FIRST'], record['LAST'])
+John Doe
+>>> # delete record
+>>> recid = result.resultset[0]['RECORDID']
+>>> fmi.set_record_id(recid)
+>>> fmi.fm_delete()
+>>> # catch an exception
+>>> try:
+...    fmi.add_db_param('LAST', 'Doe', 'cn')
+...    fmi.fm_find()
+... except FMError as exc:
+...    print(exc)
+FileMaker Error 401: No records match the request
+
+

@@ -1,0 +1,8 @@
+ <RCC> <qresource prefix="/" >
+     <file>acces/choose_color.jpg</file>
+     <file>acces/light.jpg</file>
+     <file>acces/logo.png</file>
+     <file>acces/logo.ico</file>
+     <file>acces/mus.jpg</file>
+
+ </qresource> </RCC>

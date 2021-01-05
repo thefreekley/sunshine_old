@@ -1,0 +1,70 @@
+Metadata-Version: 2.1
+Name: cgohlke
+Version: 2019.2.22
+Summary: Install all packages by cgohlke
+Home-page: https://www.lfd.uci.edu/~gohlke/
+Author: Laboratory for Fluorescence Dynamics
+Author-email: cgohlke@uci.edu
+License: BSD
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=2.7
+Requires-Dist: akima
+Requires-Dist: chebyfit
+Requires-Dist: cmapfile
+Requires-Dist: czifile
+Requires-Dist: dnacurve
+Requires-Dist: fcsfiles
+Requires-Dist: imagecodecs
+Requires-Dist: imagecodecs-lite
+Requires-Dist: imreg
+Requires-Dist: lfdfiles
+Requires-Dist: lucam
+Requires-Dist: molmass
+Requires-Dist: netpbmfile
+Requires-Dist: oiffile
+Requires-Dist: psf
+Requires-Dist: qdafile
+Requires-Dist: sdtfile
+Requires-Dist: tifffile
+Requires-Dist: transformations
+Requires-Dist: vidsrc ; platform_system == "Windows"
+Requires-Dist: fmkr ; python_version >= "3"
+Requires-Dist: uciwebauth ; python_version >= "3"
+
+
+This package installs the following Python libraries and scripts by
+`cgohlke <https://pypi.org/user/cgohlke/>`_:
+
+* `akima <https://pypi.org/project/akima/>`_
+* `chebyfit <https://pypi.org/project/chebyfit/>`_
+* `cmapfile <https://pypi.org/project/cmapfile/>`_
+* `czifile <https://pypi.org/project/czifile/>`_
+* `dnacurve <https://pypi.org/project/dnacurve/>`_
+* `fcsfiles <https://pypi.org/project/fcsfiles/>`_
+* `fmkr <https://pypi.org/project/fmkr/>`_
+* `imagecodecs <https://pypi.org/project/imagecodecs/>`_
+* `imagecodecs-lite <https://pypi.org/project/imagecodecs-lite/>`_
+* `imreg <https://pypi.org/project/imreg/>`_
+* `lfdfiles <https://pypi.org/project/lfdfiles/>`_
+* `lucam <https://pypi.org/project/lucam/>`_
+* `molmass <https://pypi.org/project/molmass/>`_
+* `netpbmfile <https://pypi.org/project/netpbmfile/>`_
+* `oiffile <https://pypi.org/project/oiffile/>`_
+* `psf <https://pypi.org/project/psf/>`_
+* `qdafile <https://pypi.org/project/qdafile/>`_
+* `sdtfile <https://pypi.org/project/sdtfile/>`_
+* `tifffile <https://pypi.org/project/tifffile/>`_
+* `transformations <https://pypi.org/project/transformations/>`_
+* `uciwebauth <https://pypi.org/project/uciwebauth/>`_
+* `vidsrc <https://pypi.org/project/vidsrc/>`_
+
+

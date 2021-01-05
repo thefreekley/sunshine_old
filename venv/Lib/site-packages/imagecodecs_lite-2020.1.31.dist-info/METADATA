@@ -1,0 +1,23 @@
+Metadata-Version: 2.1
+Name: imagecodecs-lite
+Version: 2020.1.31
+Summary: The imagecodecs-lite package is deprecated. Use the imagecodecs package instead.
+Home-page: https://www.lfd.uci.edu/~gohlke/
+Author: Christoph Gohlke
+Author-email: cgohlke@uci.edu
+License: BSD
+Platform: any
+Classifier: Development Status :: 7 - Inactive
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Dist: imagecodecs
+
+UNKNOWN
+
+

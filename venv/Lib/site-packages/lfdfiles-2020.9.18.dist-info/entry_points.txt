@@ -1,0 +1,3 @@
+[console_scripts]
+lfdfiles = lfdfiles.__main__:main
+

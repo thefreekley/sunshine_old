@@ -1,0 +1,83 @@
+Metadata-Version: 2.1
+Name: uciwebauth
+Version: 2020.1.1
+Summary: Access UCI WebAuth, LDAP person records, and Active Directory user objects
+Home-page: https://www.lfd.uci.edu/~gohlke/
+Author: Christoph Gohlke
+Author-email: cgohlke@uci.edu
+License: BSD
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.6
+Provides-Extra: adsi
+Requires-Dist: pywin32 (>=226) ; (platform_system == "Windows") and extra == 'adsi'
+Provides-Extra: all
+Requires-Dist: python-ldap (>=3.1) ; extra == 'all'
+Requires-Dist: pywin32 (>=226) ; (platform_system == "Windows") and extra == 'all'
+Provides-Extra: ldap
+Requires-Dist: python-ldap (>=3.1) ; extra == 'ldap'
+
+Access UCI WebAuth, LDAP person records, and Active Directory user objects
+==========================================================================
+
+Uciwebauth is a Python library to access identity management and authentication
+services at the University of California, Irvine (UCI):
+
+1. WebAuth provides a secure, single sign-on authentication solution tool
+   for web applications.
+2. LDAP (Lightweight Directory Access Protocol) provides information from
+   the Campus Directory.
+3. ADSI (Active Directory Service Interfaces) enables managing user objects
+   in a Microsoft AD.
+
+:Author:
+  `Christoph Gohlke <https://www.lfd.uci.edu/~gohlke/>`_
+
+:Organization:
+  Laboratory for Fluorescence Dynamics. University of California, Irvine
+
+:License: BSD 3-Clause
+
+:Version: 2020.1.1
+
+Requirements
+------------
+* `CPython >= 3.6 <https://www.python.org>`_
+* `Python-ldap 3.2 <https://www.python-ldap.org>`_
+* `Pywin32 227 <https://github.com/mhammond/pywin32>`_
+
+Revisions
+---------
+2020.1.1
+    Remove support for Python 3.5.
+    Update copyright.
+2019.1.4
+    Fix static code analysis.
+2018.9.28
+    Add option to authenticate with OIT LDAP service.
+    Use OIT instead of Campus LDAP service.
+2018.8.30
+    Move uciwebauth.py module into uciwebauth package.
+2018.5.25
+    Add Active Directory Service Interfaces for user accounts.
+    Remove support for Python 2.
+    Remove Django backend.
+2008.x.x
+    Initial release.
+
+References
+----------
+1. OIT WebAuth: A tool for validating UCInetIDs on the Web.
+   https://www.oit.uci.edu/idm/webauth/
+2. UCI LDAP Directory Service. https://www.oit.uci.edu/idm/ldap/
+3. Active Directory Service Interfaces.
+   https://docs.microsoft.com/en-us/windows/desktop/adsi/
+
+

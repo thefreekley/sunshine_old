@@ -1,0 +1,4 @@
+[console_scripts]
+dnacurve = dnacurve.dnacurve:main
+dnacurve_web = dnacurve.dnacurve_web:main
+

@@ -1,0 +1,7 @@
+[console_scripts]
+molmass = molmass.molmass:main
+molmass_web = molmass.molmass_web:main
+
+[gui_scripts]
+elements_gui = molmass.elements_gui:main
+

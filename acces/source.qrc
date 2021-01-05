@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>light.jpg</file>
+  </qresource>
+  <qresource prefix="mus">
+    <file>mus.jpg</file>
+  </qresource>
+  <qresource prefix="choose_color">
+    <file>choose_color.jpg</file>
+  </qresource>
+</RCC>
