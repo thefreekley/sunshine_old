@@ -2,16 +2,18 @@ import sys
 from PyQt5.QtWidgets import QApplication,QWidget,QColorDialog,QPushButton
 from PyQt5 import uic,QtGui,QtCore
 from PyQt5.QtGui import *
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import QThread
 from PyQt5 import QtWidgets
 import serial
-import time
 import os
 import sunshine_ui
 import img
-
+import time
+import datetime
+import comp
+from amplitude_level import AmplitudeLevel
 mode_theme = 0
-mode_music = 0
+mode_music = 4
 lvl_light = 0
 lvl_tone = 0
 color = (255,0,255)
@@ -23,10 +25,32 @@ current_serial_port = ""
 if getattr(sys, 'frozen', False):
     os.chdir(sys._MEIPASS)
 
-import comp
+
+class AmplitudeLevel(QThread):
+    tt = AmplitudeLevel()
+    def __init__(self):
+        QThread.__init__(self)
+
+
+    def run(self):
+        while True:
+            if mode_music != 4:
+                a = int(self.tt.listen()/10)
+                ser.write(str(chr(4)).encode('ascii'))
+                time.sleep(0.00001)
+                ser.write(str(chr(mapping(a,350,60)+5)).encode('ascii'))
+                time.sleep(0.00001)
+
+
+
+
+
+
 class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        self.level_amplitude = AmplitudeLevel()
+        self.level_amplitude.start()
         self.setupUi(self)
         self.start()
         self.set_radiobutton()
@@ -156,7 +180,6 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
 
         if ser:
 
-            print("chelnз")
             ser.write(str(chr(3)).encode('ascii'))
             time.sleep(0.002)
             ser.write(str(chr( checkUnits(color[0],1)) ).encode('ascii'))
@@ -188,6 +211,11 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
 def checkUnits(num,unit):
     if unit == 1: return int(num/10) + 5
     if unit == 2: return num - int(num / 10)*10 + 5
+
+def mapping(num,max_cur,max_new): #start - 0
+    coef = max_new/max_cur
+    return int(coef*num)
+
 
 
 if __name__ == '__main__':
