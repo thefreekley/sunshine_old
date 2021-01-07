@@ -1,6 +1,7 @@
 import pyaudio
 import struct
 import math
+import numpy as np
 
 INITIAL_TAP_THRESHOLD = 0.010
 FORMAT = pyaudio.paInt16
@@ -29,6 +30,16 @@ def get_rms(block):
 
     return math.sqrt(sum_squares / count)
 
+def fft_transform(data):
+    count = len(data) / 2
+    format = "%dh" % (count)
+    data_unpacked = struct.unpack(format, data)
+    data_np = np.array(data_unpacked)
+    data_fft = np.fft.fft(data_np)
+    data_freq = np.abs(data_fft) / len(data_fft)
+    data_freq = list(map(lambda x: int(x*10), data_freq))
+    return data_freq
+
 
 class AmplitudeLevel(object):
     def __init__(self):
@@ -44,7 +55,7 @@ class AmplitudeLevel(object):
                 input_device.append(info)
 
 
-        return device_index
+        return input_device
 
     def open_mic_stream(self):
         device_index = 3
@@ -66,6 +77,15 @@ class AmplitudeLevel(object):
 
         return amplitude * 10000
 
+    def get_fft(self):
+        block = self.stream.read(INPUT_FRAMES_PER_BLOCK)
 
-tt = AmplitudeLevel()
-tt.find_input_device()
+        norm = fft_transform(block)
+
+        frequency = [1,3,7,13,25,50,100,150]
+        # frequency = [1,8,16,24,32,40,64,100]
+        norm_frequency = []
+        for i in frequency:
+            norm_frequency.append(norm[i])
+
+        return norm_frequency

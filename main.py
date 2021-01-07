@@ -2,16 +2,20 @@ import sys
 from PyQt5.QtWidgets import QApplication,QWidget,QColorDialog,QPushButton
 from PyQt5 import uic,QtGui,QtCore
 from PyQt5.QtGui import *
-from PyQt5.QtCore import QThread
+from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtCore import QThread,QTimer
 from PyQt5 import QtWidgets
 import serial
 import os
 import sunshine_ui
 import img
 import time
-import datetime
 import comp
 from amplitude_level import AmplitudeLevel
+
+
+
+audio_index = 3
 mode_theme = 0
 mode_music = 4
 lvl_light = 0
@@ -22,24 +26,47 @@ ser = ''
 serial_ports = []
 current_serial_port = ""
 
+audio_input = AmplitudeLevel()
+fft_out = [0]*len(audio_input.get_fft())
+
 if getattr(sys, 'frozen', False):
     os.chdir(sys._MEIPASS)
 
 
 class AmplitudeLevel(QThread):
-    tt = AmplitudeLevel()
+
+    def __init__(self):
+        QThread.__init__(self)
+        self.old = 0
+
+
+    def run(self):
+        global audio_input
+        global fft_out
+        while True:
+
+            if mode_music != 4:
+
+                a = int(audio_input.listen()/10)
+                ser.write(str(chr(4)).encode('ascii'))
+                ser.write(str(chr(mapping(a,350,60)+5)).encode('ascii'))
+
+
+class AmplitudeFFT(QThread):
+
     def __init__(self):
         QThread.__init__(self)
 
 
+
     def run(self):
+        global audio_input
+        global fft_out
         while True:
-            if mode_music != 4:
-                a = int(self.tt.listen()/10)
-                ser.write(str(chr(4)).encode('ascii'))
-                time.sleep(0.00001)
-                ser.write(str(chr(mapping(a,350,60)+5)).encode('ascii'))
-                time.sleep(0.00001)
+            fft_out = audio_input.get_fft()
+            time.sleep(0.1)
+
+
 
 
 
@@ -51,9 +78,16 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         super().__init__()
         self.level_amplitude = AmplitudeLevel()
         self.level_amplitude.start()
+
+        self.fft_amplitude = AmplitudeFFT()
+        self.fft_amplitude.start()
+
         self.setupUi(self)
         self.start()
         self.set_radiobutton()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.set_equalizer)
+        self.timer.start(0.2)
 
 
 
@@ -71,7 +105,9 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         self.button_collor.clicked.connect(lambda :self._slotPOIColorSelectionTriggered())
 
         self.connect.clicked.connect(lambda:self.update_serial_ports())
-        self.comboBox.currentIndexChanged.connect(lambda:self.set_combobox(self.comboBox.currentText()))
+        self.comboBox.currentIndexChanged.connect(lambda:self.set_combobox_ser(self.comboBox.currentText()))
+
+        self.comboBox_2.currentIndexChanged.connect(lambda: self.set_combobox_audio(self.comboBox_2.currentText()))
 
         self.verticalSlider.setMinimum(5)
         self.verticalSlider.setMaximum(127)
@@ -88,6 +124,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
     def set_radiobutton(self):
         self.radioButton1.setChecked(True)
         self.radioButton1_14.setChecked(True)
+        self.radioButton1_15.setChecked(False)
 
         self.check_radiobutton(self.radioButton1,1,self.click_color_theme)
         self.check_radiobutton(self.radioButton1_2, 2,self.click_color_theme)
@@ -99,6 +136,32 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         self.check_radiobutton(self.radioButton1_12, 2 ,self.click_music_theme)
         self.check_radiobutton(self.radioButton1_13, 3 ,self.click_music_theme)
         self.check_radiobutton(self.radioButton1_14, 4 ,self.click_music_theme)
+
+    def set_equalizer(self):
+        global fft_out
+        self.line_10.move(180,211 - mapping(fft_out[0],10000,200))
+        self.line_10.resize(15, mapping(fft_out[0],10000,200))
+
+        self.line_3.move(200, 211 - mapping(fft_out[1], 10000,200))
+        self.line_3.resize(15, mapping(fft_out[1], 10000,200))
+
+        self.line_4.move(220, 211 - mapping(fft_out[2], 10000,200))
+        self.line_4.resize(15, mapping(fft_out[2], 10000,200))
+
+        self.line_5.move(240, 211 - mapping(fft_out[3], 10000,200))
+        self.line_5.resize(15, mapping(fft_out[3], 10000,200))
+
+        self.line_6.move(260, 211 - mapping(fft_out[4], 10000,200))
+        self.line_6.resize(15, mapping(fft_out[4], 10000,200))
+
+        self.line_7.move(280, 211 - mapping(fft_out[5], 10000,200))
+        self.line_7.resize(15, mapping(fft_out[5], 10000,200))
+
+        self.line_8.move(300, 211 - mapping(fft_out[6], 10000,200))
+        self.line_8.resize(15, mapping(fft_out[6], 10000,200))
+
+        self.line_9.move(320, 211 - mapping(fft_out[7], 10000,200))
+        self.line_9.resize(15, mapping(fft_out[7], 10000,200))
 
     def set_light(self,slider):
         global ser
@@ -120,7 +183,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
 
 
 
-    def set_combobox(self,newText):
+    def set_combobox_ser(self,newText):
         global current_serial_port
         global ser
         current_serial_port = newText
@@ -131,6 +194,21 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
             print
             "failed to write to port %s" % current_serial_port
             sys.exit()
+
+    def set_combobox_audio(self,index):
+        global audio_index
+        audio_index = index
+
+    def update_audio(self):
+        global audio_index
+        self.comboBox_2.clear()
+        inputs = audio_input.find_input_device()
+        for input in inputs:
+            if input['name'].find('микшер')!=-1 or input['name'].find('mix')!=-1:
+                audio_index = input['index']
+            self.comboBox_2.addItem(input['name'])
+
+
 
 
     def check_radiobutton(self,radiobutton,num,key):
@@ -220,6 +298,28 @@ def mapping(num,max_cur,max_new): #start - 0
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    app.setStyle("Fusion")
+
+    # Now use a palette to switch to dark colors:
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(53, 53, 53))
+
+    palette.setColor(QPalette.Base, QColor(25, 25, 25))
+    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+    palette.setColor(QPalette.ToolTipBase, QColor(0, 0, 0))
+    palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
+    palette.setColor(QPalette.Text, QColor(255, 255, 255))
+    palette.setColor(QPalette.Button, QColor(53, 53, 53))
+    palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
+    palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
+    palette.setColor(QPalette.Link, QColor(42, 130, 218))
+    palette.setColor(QPalette.Highlight, QColor(100, 0, 0))
+    palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
+    app.setPalette(palette)
+
+
     ex = App()
     ex.update_serial_ports()
+    ex.update_audio()
     app.exec_()
