@@ -19,7 +19,7 @@ audio_index = 3
 mode_theme = 0
 mode_music = 4
 lvl_light = 0
-lvl_tone = 0
+lvl_tone = 100
 color = (255,0,255)
 ser = ''
 
@@ -28,6 +28,7 @@ current_serial_port = ""
 
 audio_input = AmplitudeLevel()
 fft_out = [0]*len(audio_input.get_fft())
+flag_equalizer = False
 
 if getattr(sys, 'frozen', False):
     os.chdir(sys._MEIPASS)
@@ -43,13 +44,24 @@ class AmplitudeLevel(QThread):
     def run(self):
         global audio_input
         global fft_out
+        global lvl_tone
         while True:
 
             if mode_music != 4:
 
-                a = int(audio_input.listen()/10)
+                a = int(audio_input.listen())
+
+                amplitude_filter = mapping(a,6001 - lvl_tone,30)
+
+
+
+                amplitude_filter= int(amplitude_filter * 1.5) +5
+
+                if amplitude_filter>60:
+                    amplitude_filter=60
+
                 ser.write(str(chr(4)).encode('ascii'))
-                ser.write(str(chr(mapping(a,350,60)+5)).encode('ascii'))
+                ser.write(str(chr(amplitude_filter)).encode('ascii'))
 
 
 class AmplitudeFFT(QThread):
@@ -62,9 +74,13 @@ class AmplitudeFFT(QThread):
     def run(self):
         global audio_input
         global fft_out
+        global flag_equalizer
+
         while True:
-            fft_out = audio_input.get_fft()
-            time.sleep(0.1)
+            if flag_equalizer:
+                fft_out = audio_input.get_fft()
+
+            time.sleep(0.06)
 
 
 
@@ -87,7 +103,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         self.set_radiobutton()
         self.timer = QTimer()
         self.timer.timeout.connect(self.set_equalizer)
-        self.timer.start(0.2)
+        self.timer.start(30)
 
 
 
@@ -114,8 +130,10 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         self.verticalSlider.setValue(127)
         self.verticalSlider.valueChanged.connect(lambda: self.set_light(self.verticalSlider))
 
-        self.verticalSlider_2.setMinimum(-1)
-        self.verticalSlider_2.setMaximum(250)
+        self.verticalSlider_2.setMinimum(100)
+        self.verticalSlider_2.setMaximum(6000)
+        self.verticalSlider_2.setValue(1750)
+
         self.verticalSlider_2.valueChanged.connect(lambda: self.set_tone(self.verticalSlider_2))
 
 
@@ -124,7 +142,9 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
     def set_radiobutton(self):
         self.radioButton1.setChecked(True)
         self.radioButton1_14.setChecked(True)
+
         self.radioButton1_15.setChecked(False)
+        self.radioButton1_15.toggled.connect(lambda: self.equalizer_check())
 
         self.check_radiobutton(self.radioButton1,1,self.click_color_theme)
         self.check_radiobutton(self.radioButton1_2, 2,self.click_color_theme)
@@ -137,31 +157,40 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         self.check_radiobutton(self.radioButton1_13, 3 ,self.click_music_theme)
         self.check_radiobutton(self.radioButton1_14, 4 ,self.click_music_theme)
 
+    def equalizer_check(self):
+        global flag_equalizer
+        global fft_out
+
+        if flag_equalizer:
+            fft_out = [0] * len(audio_input.get_fft())
+
+        flag_equalizer = self.radioButton1_15.isChecked()
+
     def set_equalizer(self):
         global fft_out
-        self.line_10.move(180,211 - mapping(fft_out[0],10000,200))
-        self.line_10.resize(15, mapping(fft_out[0],10000,200))
+        self.line_10.move(180,211 - mapping(fft_out[0],19000,200))
+        self.line_10.resize(15, mapping(fft_out[0],19000,200))
 
-        self.line_3.move(200, 211 - mapping(fft_out[1], 10000,200))
-        self.line_3.resize(15, mapping(fft_out[1], 10000,200))
+        self.line_3.move(200, 211 - mapping(fft_out[1], 19000,200))
+        self.line_3.resize(15, mapping(fft_out[1], 19000,200))
 
-        self.line_4.move(220, 211 - mapping(fft_out[2], 10000,200))
-        self.line_4.resize(15, mapping(fft_out[2], 10000,200))
+        self.line_4.move(220, 211 - mapping(fft_out[2], 19000,200))
+        self.line_4.resize(15, mapping(fft_out[2], 19000,200))
 
-        self.line_5.move(240, 211 - mapping(fft_out[3], 10000,200))
-        self.line_5.resize(15, mapping(fft_out[3], 10000,200))
+        self.line_5.move(240, 211 - mapping(fft_out[3], 19000,200))
+        self.line_5.resize(15, mapping(fft_out[3], 19000,200))
 
-        self.line_6.move(260, 211 - mapping(fft_out[4], 10000,200))
-        self.line_6.resize(15, mapping(fft_out[4], 10000,200))
+        self.line_6.move(260, 211 - mapping(fft_out[4], 19000,200))
+        self.line_6.resize(15, mapping(fft_out[4], 19000,200))
 
-        self.line_7.move(280, 211 - mapping(fft_out[5], 10000,200))
-        self.line_7.resize(15, mapping(fft_out[5], 10000,200))
+        self.line_7.move(280, 211 - mapping(fft_out[5], 19000,200))
+        self.line_7.resize(15, mapping(fft_out[5], 19000,200))
 
-        self.line_8.move(300, 211 - mapping(fft_out[6], 10000,200))
-        self.line_8.resize(15, mapping(fft_out[6], 10000,200))
+        self.line_8.move(300, 211 - mapping(fft_out[6], 19000,200))
+        self.line_8.resize(15, mapping(fft_out[6], 19000,200))
 
-        self.line_9.move(320, 211 - mapping(fft_out[7], 10000,200))
-        self.line_9.resize(15, mapping(fft_out[7], 10000,200))
+        self.line_9.move(320, 211 - mapping(fft_out[7], 19000,200))
+        self.line_9.resize(15, mapping(fft_out[7], 19000,200))
 
     def set_light(self,slider):
         global ser
