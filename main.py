@@ -14,7 +14,7 @@ import comp
 from amplitude_level import AmplitudeLevel
 
 
-
+count_mode = 10
 audio_index = 3
 mode_theme = 0
 mode_music = 4
@@ -55,7 +55,7 @@ class AmplitudeLevel(QThread):
 
 
 
-                amplitude_filter= int(amplitude_filter * 1.5) +5
+                amplitude_filter= int(amplitude_filter * 1.5) + count_mode
 
                 if amplitude_filter>60:
                     amplitude_filter=60
@@ -68,6 +68,7 @@ class AmplitudeFFT(QThread):
 
     def __init__(self):
         QThread.__init__(self)
+        self.old = fft_out
 
 
 
@@ -78,9 +79,38 @@ class AmplitudeFFT(QThread):
 
         while True:
             if flag_equalizer:
+                self.old = fft_out
                 fft_out = audio_input.get_fft()
 
-            time.sleep(0.06)
+                coef_frequence = []
+
+
+
+
+
+
+
+                for i in range(len(fft_out)):
+                    a = int((fft_out[i]*30)/15000)
+                    coef_frequence.append(a)
+
+                ser.write(str(chr(5)).encode('ascii'))
+                ser.write(str(chr(coef_frequence[0] + count_mode)).encode('ascii'))
+
+                ser.write(str(chr(5)).encode('ascii'))
+                ser.write(str(chr(coef_frequence[1] + count_mode)).encode('ascii'))
+
+                ser.write(str(chr(5)).encode('ascii'))
+                ser.write(str(chr(coef_frequence[2] + count_mode)).encode('ascii'))
+
+                ser.write(str(chr(5)).encode('ascii'))
+                ser.write(str(chr(coef_frequence[3] + count_mode)).encode('ascii'))
+
+
+                # time.sleep(0.06)
+            else:
+                fft_out = [0]*len(fft_out)
+
 
 
 
@@ -125,7 +155,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
 
         self.comboBox_2.currentIndexChanged.connect(lambda: self.set_combobox_audio(self.comboBox_2.currentText()))
 
-        self.verticalSlider.setMinimum(5)
+        self.verticalSlider.setMinimum(count_mode)
         self.verticalSlider.setMaximum(127)
         self.verticalSlider.setValue(127)
         self.verticalSlider.valueChanged.connect(lambda: self.set_light(self.verticalSlider))
@@ -163,6 +193,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
 
         if flag_equalizer:
             fft_out = [0] * len(audio_input.get_fft())
+            print('sda')
 
         flag_equalizer = self.radioButton1_15.isChecked()
 
@@ -249,7 +280,7 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
             mode_theme = num
 
             global ser
-            string = str(chr(mode_theme + 5)).encode('ascii')
+            string = str(chr(mode_theme + count_mode)).encode('ascii')
             if ser:
                 print(string, ord(string))
                 ser.write(str(chr(2)).encode('ascii'))
@@ -257,11 +288,30 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
                 ser.write(string)
 
 
+
+
     def click_music_theme(self, radiobutton, num):
         global mode_music
         if radiobutton.isChecked() == True:
             mode_music = num
 
+            global ser
+            string = str(chr(mode_music + count_mode)).encode('ascii')
+            if ser:
+                time.sleep(0.2)
+                ser.write(str(chr(6)).encode('ascii'))
+                ser.write(string)
+                time.sleep(0.2)
+
+                time.sleep(0.2)
+                ser.write(str(chr(6)).encode('ascii'))
+                ser.write(string)
+                time.sleep(0.2)
+
+                time.sleep(0.2)
+                ser.write(str(chr(6)).encode('ascii'))
+                ser.write(string)
+                time.sleep(0.2)
 
     def update_serial_ports(self):
         global serial_ports
@@ -288,36 +338,36 @@ class App(QtWidgets.QMainWindow,sunshine_ui.Ui_MainWindow):
         if ser:
 
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr( checkUnits(color[0],1)) ).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(checkUnits(color[0],2))).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
 
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(checkUnits(color[1], 1))).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(checkUnits(color[1], 2))).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
 
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(checkUnits(color[2], 1))).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(3)).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
             ser.write(str(chr(checkUnits(color[2], 2))).encode('ascii'))
-            time.sleep(0.002)
+            time.sleep(0.02)
 
 
 def checkUnits(num,unit):
-    if unit == 1: return int(num/10) + 5
-    if unit == 2: return num - int(num / 10)*10 + 5
+    if unit == 1: return int(num/10) + count_mode
+    if unit == 2: return num - int(num / 10)*10 + count_mode
 
 def mapping(num,max_cur,max_new): #start - 0
     coef = max_new/max_cur
